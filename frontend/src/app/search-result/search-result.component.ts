@@ -23,6 +23,7 @@ import { MatButtonModule } from '@angular/material/button'
 import { MatCardModule, MatCardTitle, MatCardContent } from '@angular/material/card'
 import { AsyncPipe } from '@angular/common'
 import { ProductComponent } from '../product/product.component'
+import { SecurityContext } from '@angular/core'
 
 library.add(faEye, faCartPlus)
 
@@ -49,7 +50,7 @@ export class SearchResultComponent implements OnDestroy, AfterViewInit {
   public pageSizeOptions: number[] = []
   public dataSource!: MatTableDataSource<ProductTableEntry>
   public gridDataSource!: BehaviorSubject<ProductTableEntry[]>
-  public searchValue?: SafeHtml
+  public searchValue?: string
   public resultsLength = 0
   public currentPageSize = 15
   @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator
@@ -110,7 +111,7 @@ export class SearchResultComponent implements OnDestroy, AfterViewInit {
 
   trustProductDescription (tableData: any[]) { // vuln-code-snippet neutral-line restfulXssChallenge
     for (let i = 0; i < tableData.length; i++) { // vuln-code-snippet neutral-line restfulXssChallenge
-      tableData[i].description = this.sanitizer.bypassSecurityTrustHtml(tableData[i].description) // vuln-code-snippet vuln-line restfulXssChallenge
+      tableData[i].description = this.sanitizer.sanitize(SecurityContext.HTML, tableData[i].description) ?? '' // vuln-code-snippet vuln-line restfulXssChallenge
     } // vuln-code-snippet neutral-line restfulXssChallenge
   } // vuln-code-snippet neutral-line restfulXssChallenge
 
@@ -143,7 +144,7 @@ export class SearchResultComponent implements OnDestroy, AfterViewInit {
         this.io.socket().emit('verifyLocalXssChallenge', queryParam)
       }) // vuln-code-snippet hide-end
       this.dataSource.filter = queryParam.toLowerCase()
-      this.searchValue = this.sanitizer.bypassSecurityTrustHtml(queryParam) // vuln-code-snippet vuln-line localXssChallenge xssBonusChallenge
+      this.searchValue = queryParam // vuln-code-snippet vuln-line localXssChallenge xssBonusChallenge
       if (this.gridDataSourceSubscription) {
         this.gridDataSourceSubscription.unsubscribe()
       }
